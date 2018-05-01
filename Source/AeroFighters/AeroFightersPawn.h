@@ -42,8 +42,9 @@ protected:
 	void MoveUpInput(float Val);
 
 	/** Bound to the horizontal axis */
-	void MoveRightInput(float Val);
+	void LoopRightInput(float Val);
 
+	/** Bound to the horizontal axis */
 	void TurnRightInput(float Val);
 
 private:

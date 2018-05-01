@@ -86,7 +86,7 @@ void AAeroFightersPawn::SetupPlayerInputComponent(class UInputComponent* PlayerI
 	// Bind our control axis' to callback functions
 	PlayerInputComponent->BindAxis("Thrust", this, &AAeroFightersPawn::ThrustInput);
 	PlayerInputComponent->BindAxis("MoveUp", this, &AAeroFightersPawn::MoveUpInput);
-	PlayerInputComponent->BindAxis("MoveRight", this, &AAeroFightersPawn::MoveRightInput);
+	PlayerInputComponent->BindAxis("LoopRight", this, &AAeroFightersPawn::LoopRightInput);
 	PlayerInputComponent->BindAxis("TurnRight", this, &AAeroFightersPawn::TurnRightInput);
 }
 
@@ -114,7 +114,7 @@ void AAeroFightersPawn::MoveUpInput(float Val)
 	CurrentPitchSpeed = FMath::FInterpTo(CurrentPitchSpeed, TargetPitchSpeed, GetWorld()->GetDeltaSeconds(), 2.f);
 }
 
-void AAeroFightersPawn::MoveRightInput(float Val)
+void AAeroFightersPawn::LoopRightInput(float Val)
 {
 	const bool bIsRolling = FMath::Abs(Val) > 0.2f;
 
@@ -122,7 +122,8 @@ void AAeroFightersPawn::MoveRightInput(float Val)
 	// If not turning, roll to reverse current roll value.
 	if (bIsRolling && !IsTurning) {
 		FRotator rotator = GetActorRotation();
-		rotator.SetComponentForAxis(EAxis::X, rotator.GetComponentForAxis(EAxis::X) + 1.0f * Val);
+		float componentForX = rotator.GetComponentForAxis(EAxis::X);
+		rotator.SetComponentForAxis(EAxis::X, componentForX + 1.0f * Val);
 		SetActorRotation(rotator);
 	}
 }
