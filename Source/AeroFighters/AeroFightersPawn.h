@@ -18,9 +18,28 @@ class AAeroFightersPawn : public APawn
 	UPROPERTY(Category = Camera, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* SpringArm;
 
+	/** Spring arm that will offset the camera */
+	UPROPERTY(Category = Camera, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class USpringArmComponent* WeaponArm;
+
 	/** Camera component that will be our viewpoint */
 	UPROPERTY(Category = Camera, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* Camera;
+
+	/** Spring arm that will offset the camera */
+	UPROPERTY(Category = Camera, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class USpringArmComponent* LeftSpringArm;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
+	class USceneComponent* LeftMuzzleLocation;
+
+	/** Spring arm that will offset the camera */
+	UPROPERTY(Category = Camera, VisibleDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class USpringArmComponent* RightSpringArm;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
+	class USceneComponent* RightMuzzleLocation;
+
 public:
 	AAeroFightersPawn();
 
@@ -47,6 +66,12 @@ protected:
 	/** Bound to the horizontal axis */
 	void TurnRightInput(float Val);
 
+	/** Shot weapon */
+	void OnFire(float Val);
+
+	/** Fire timer handler */
+	void ShotTimerExpired();
+
 private:
 
 	/** How quickly forward speed changes */
@@ -65,6 +90,9 @@ private:
 	UPROPERTY(Category=Yaw, EditAnywhere)
 	float MinSpeed;
 
+	UPROPERTY(Category = Projectile, EditAnywhere)
+	TSubclassOf<class AAirProjectile> ProjectileClass;
+
 	/** Current forward speed */
 	float CurrentForwardSpeed;
 
@@ -78,6 +106,16 @@ private:
 	float CurrentRollSpeed;
 
 	bool IsTurning;
+
+	bool CanFire;
+
+	/** Offset from the ships location to spawn projectiles */
+	FVector GunOffset;
+
+	float FireRate;
+
+	/** Handle for efficient management of ShotTimerExpired timer */
+	FTimerHandle TimerHandle_ShotTimerExpired;
 
 public:
 	/** Returns PlaneMesh subobject **/

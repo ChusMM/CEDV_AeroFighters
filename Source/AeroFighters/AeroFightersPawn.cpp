@@ -8,6 +8,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Engine/World.h"
 #include "Engine/StaticMesh.h"
+#include "AirProjectile.h"
 
 AAeroFightersPawn::AAeroFightersPawn()
 {
@@ -35,7 +36,17 @@ AAeroFightersPawn::AAeroFightersPawn()
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera0"));
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);	// Attach the camera
 	Camera->bUsePawnControlRotation = false; // Don't rotate camera with controller
-
+	
+	LeftMuzzleLocation = CreateDefaultSubobject<USceneComponent>(TEXT("LeftMuzzleLocation"));
+	LeftMuzzleLocation->SetupAttachment(RootComponent);
+	LeftMuzzleLocation->SetRelativeLocation(FVector(550.0f, -650.0f, -50.0f));
+	LeftMuzzleLocation->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
+	
+	RightMuzzleLocation = CreateDefaultSubobject<USceneComponent>(TEXT("RightMuzzleLocation"));
+	RightMuzzleLocation->SetupAttachment(RootComponent);
+	RightMuzzleLocation->SetRelativeLocation(FVector(550.0f, 650.0f, -50.0f));
+	RightMuzzleLocation->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
+	
 	// Set handling parameters
 	Acceleration = 500.f;
 	TurnSpeed = 50.f;
@@ -43,6 +54,9 @@ AAeroFightersPawn::AAeroFightersPawn()
 	MinSpeed = 500.f;
 	CurrentForwardSpeed = 500.f;
 	IsTurning = false;
+	GunOffset = FVector(200.f, 0.f, 0.f);
+	FireRate = 0.1f;
+	CanFire = true;
 }
 
 void AAeroFightersPawn::Tick(float DeltaSeconds)
@@ -88,6 +102,7 @@ void AAeroFightersPawn::SetupPlayerInputComponent(class UInputComponent* PlayerI
 	PlayerInputComponent->BindAxis("MoveUp", this, &AAeroFightersPawn::MoveUpInput);
 	PlayerInputComponent->BindAxis("LoopRight", this, &AAeroFightersPawn::LoopRightInput);
 	PlayerInputComponent->BindAxis("TurnRight", this, &AAeroFightersPawn::TurnRightInput);
+	PlayerInputComponent->BindAxis("FireWeapon", this, &AAeroFightersPawn::OnFire);
 }
 
 void AAeroFightersPawn::ThrustInput(float Val)
@@ -142,4 +157,32 @@ void AAeroFightersPawn::TurnRightInput(float Val) {
 
 	// Smoothly interpolate roll speed
 	CurrentRollSpeed = FMath::FInterpTo(CurrentRollSpeed, TargetRollSpeed, GetWorld()->GetDeltaSeconds(), 2.f);
+}
+
+void AAeroFightersPawn::OnFire(float Val) {
+	// try and fire a projectile
+	const bool IsFiring = FMath::Abs(Val);
+	if (ProjectileClass != NULL && IsFiring && CanFire)
+	{
+		UWorld* const World = GetWorld();
+		if (World != NULL)
+		{
+			const FRotator LeftSpawnRotation = LeftMuzzleLocation->GetComponentRotation();
+			const FVector LeftSpawnLocation = LeftMuzzleLocation->GetComponentLocation() + GunOffset;
+		
+			const FRotator RightSpawnRotation = RightMuzzleLocation->GetComponentRotation();
+			const FVector RightSpawnLocation = RightMuzzleLocation->GetComponentLocation() + GunOffset;
+
+			World->SpawnActor<AAirProjectile>(ProjectileClass, LeftSpawnLocation, LeftSpawnRotation);
+			World->SpawnActor<AAirProjectile>(ProjectileClass, RightSpawnLocation, RightSpawnRotation);
+
+			CanFire = false;
+			World->GetTimerManager().SetTimer(TimerHandle_ShotTimerExpired, this, &AAeroFightersPawn::ShotTimerExpired, FireRate);
+		}
+	}
+}
+
+void AAeroFightersPawn::ShotTimerExpired()
+{
+	CanFire = true;
 }
